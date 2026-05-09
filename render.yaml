@@ -10,10 +10,11 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      # Auto-set by Render
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
-        generateValue: true # Render auto-generates a strong secret on first deploy
+        generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: ANTHROPIC_MODEL
@@ -22,11 +23,20 @@ services:
         value: openai/whisper-large-v3-turbo
       - key: TWILIO_WHATSAPP_FROM
         value: whatsapp:+14155238886
-      # Set these in the Render dashboard manually (not committed to repo):
-      # MONGODB_URI            (Atlas connection string)
-      # CORS_ORIGIN            (Cloudflare Pages frontend URL)
-      # PUBLIC_BASE_URL        (this Render service's own URL after first deploy)
-      # ANTHROPIC_API_KEY      (optional — leave blank to disable Claude features)
-      # HF_API_TOKEN           (optional — leave blank to disable voice transcription)
-      # TWILIO_ACCOUNT_SID     (optional — leave blank to disable WhatsApp)
-      # TWILIO_AUTH_TOKEN      (optional — leave blank to disable WhatsApp)
+      # Secrets — Render will require you to fill these in via the dashboard.
+      # `sync: false` means the value is NOT in this file (good, it's in git);
+      # Render shows the key in the Environment tab and refuses to deploy until set.
+      - key: MONGODB_URI
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: HF_API_TOKEN
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
