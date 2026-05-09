@@ -1,15 +1,16 @@
 console.log('[boot] node version:', process.version);
 console.log('[boot] cwd:', process.cwd());
-console.log('[boot] starting imports…');
 
 process.on('uncaughtException', (err) => {
   console.error('[boot] UNCAUGHT EXCEPTION:', err.stack || err);
   process.exit(1);
 });
 process.on('unhandledRejection', (reason) => {
-  console.error('[boot] UNHANDLED REJECTION:', reason);
+  console.error('[boot] UNHANDLED REJECTION:', reason?.stack || reason);
   process.exit(1);
 });
+
+console.log('[boot] importing modules…');
 
 import 'dotenv/config';
 import express from 'express';
@@ -27,10 +28,15 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
+console.log('[boot] imports complete');
+console.log('[boot] env check: MONGODB_URI is', process.env.MONGODB_URI ? `set (len=${process.env.MONGODB_URI.length})` : 'MISSING');
+console.log('[boot] env check: PORT is', process.env.PORT || '(unset)');
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+console.log('[boot] express app created');
 
 app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') ?? '*' }));
 app.use(express.json({ limit: '10mb' }));
@@ -50,10 +56,24 @@ app.use('/api/chat', chatRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
+console.log('[boot] routes mounted');
+
 const PORT = process.env.PORT || 5000;
 
-connectDB(process.env.MONGODB_URI).then(() => {
-  app.listen(PORT, () => {
-    console.log(`API listening on http://localhost:${PORT}`);
-  });
+console.log('[boot] connecting to MongoDB…');
+
+// Bind the listener FIRST so Render can see the port open even if Mongo is slow.
+// This avoids a deploy timeout while keeping the DB error visible in logs.
+const server = app.listen(PORT, () => {
+  console.log(`[boot] API listening on http://localhost:${PORT}`);
 });
+
+connectDB(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('[boot] MongoDB ready');
+  })
+  .catch((err) => {
+    console.error('[boot] MONGO CONNECT FAILED:', err.message);
+    console.error(err.stack);
+    // Don't exit — let the user see the error in logs while the server still responds with 500s.
+  });

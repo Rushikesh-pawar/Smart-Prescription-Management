@@ -30,6 +30,7 @@ export async function connectDB(uri) {
     throw new Error('MONGODB_URI is not set');
   }
   mongoose.set('strictQuery', true);
-  await mongoose.connect(uri);
+  // Fail fast on bad Atlas creds / network — default is 30s which can mask the issue.
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 10_000 });
   console.log('MongoDB connected');
 }
