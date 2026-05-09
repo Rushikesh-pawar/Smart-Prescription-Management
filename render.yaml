@@ -1,0 +1,32 @@
+# Render blueprint: one-click deploy of the Smart Prescription backend.
+# Connect this repo at https://dashboard.render.com → New → Blueprint.
+services:
+  - type: web
+    name: smart-prescription-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true # Render auto-generates a strong secret on first deploy
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-4-7
+      - key: HF_WHISPER_MODEL
+        value: openai/whisper-large-v3-turbo
+      - key: TWILIO_WHATSAPP_FROM
+        value: whatsapp:+14155238886
+      # Set these in the Render dashboard manually (not committed to repo):
+      # MONGODB_URI            (Atlas connection string)
+      # CORS_ORIGIN            (Cloudflare Pages frontend URL)
+      # PUBLIC_BASE_URL        (this Render service's own URL after first deploy)
+      # ANTHROPIC_API_KEY      (optional — leave blank to disable Claude features)
+      # HF_API_TOKEN           (optional — leave blank to disable voice transcription)
+      # TWILIO_ACCOUNT_SID     (optional — leave blank to disable WhatsApp)
+      # TWILIO_AUTH_TOKEN      (optional — leave blank to disable WhatsApp)
