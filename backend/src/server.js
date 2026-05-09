@@ -1,3 +1,16 @@
+console.log('[boot] node version:', process.version);
+console.log('[boot] cwd:', process.cwd());
+console.log('[boot] starting imports…');
+
+process.on('uncaughtException', (err) => {
+  console.error('[boot] UNCAUGHT EXCEPTION:', err.stack || err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[boot] UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';

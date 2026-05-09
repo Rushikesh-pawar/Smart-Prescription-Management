@@ -6,7 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node --trace-warnings --trace-uncaught src/server.js"
   },
   "engines": {
     "node": ">=18"
