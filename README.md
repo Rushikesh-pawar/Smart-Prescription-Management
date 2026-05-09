@@ -4,6 +4,18 @@ A doctor-facing prescription web app: log in, fill a patient form, the system st
 
 > Educational/portfolio project. **Not for clinical use.** Disclaimers are surfaced on every PDF and in the UI footer.
 
+## 🌐 Live Demo
+
+| Layer | URL |
+|---|---|
+| **Frontend (Cloudflare Workers)** | https://smart-prescription.rushikesh-pawar100.workers.dev |
+| **Backend API (Render)** | https://smart-prescription-management.onrender.com |
+| **Health check** | https://smart-prescription-management.onrender.com/health |
+
+**Try it:** open the frontend URL → sign up as a doctor → click **+ New prescription** → fill in patient info → submit. The PDF is generated and sent via WhatsApp (sandbox-only — recipients must first text `join bottle-rice` to `+1-415-523-8886` to opt in to the demo).
+
+> Render's free tier sleeps after 15 min of inactivity, so the **first request may take ~30 seconds** while the service wakes. Subsequent requests are fast.
+
 ## Stack
 
 - **Frontend:** React (Vite) · React Router · Tailwind · Recharts · Axios
@@ -112,4 +124,39 @@ Vite proxies `/api` and `/pdfs` to the backend automatically.
 - [x] Drug interaction checker
 - [x] Whisper voice-to-text input
 - [x] Patient analytics dashboard
-- [ ] Hosted demo (Render/Railway + Vercel + Atlas)
+- [x] RAG chatbot for doctors (Claude tool-runner over MongoDB)
+- [x] Hosted demo on Render + Cloudflare Workers + Atlas
+
+## Deployment architecture
+
+```
+                    ┌─────────────────────────────────────────┐
+   Doctor's browser │   Cloudflare Workers (frontend / SPA)   │
+        ↓           │   smart-prescription.…workers.dev       │
+        │           └────────────────┬────────────────────────┘
+        │                            │ HTTPS · CORS-allowed
+        │                            ▼
+        │           ┌─────────────────────────────────────────┐
+        │           │   Render free Web Service (Node API)    │
+        │           │   smart-prescription-management.…       │
+        │           │   - JWT auth                            │
+        │           │   - PDF generation (pdfkit)             │
+        │           │   - prompt-cached Claude SDK calls      │
+        │           └────┬───────────────┬─────────────┬──────┘
+        │                │               │             │
+        ▼                ▼               ▼             ▼
+   ┌─────────┐    ┌──────────────┐ ┌──────────┐  ┌───────────────┐
+   │ Twilio  │    │ MongoDB Atlas│ │ Anthropic│  │ HuggingFace   │
+   │ WhatsApp│    │   (M0 free)  │ │  Claude  │  │  Inference    │
+   │ Sandbox │    │              │ │  Opus 4.7│  │  whisper-v3   │
+   └─────────┘    └──────────────┘ └──────────┘  └───────────────┘
+```
+
+All hosted services use free tiers. Total monthly cost: **$0** (until Anthropic credits are exhausted, then ~$0.005 per AI-assisted prescription).
+
+### Deploying your own copy
+
+1. **MongoDB Atlas** — create a free M0 cluster, allowlist `0.0.0.0/0`, copy the connection string.
+2. **Render** — connect your fork, root directory `backend`, build `npm install`, start `npm start`. Set env vars per `backend/.env.example`.
+3. **Cloudflare Pages/Workers** — connect the repo, root directory `frontend`, build `npm install && npm run build`, output `dist`. Set `VITE_API_URL` to the Render API URL.
+4. After both deploy, set `CORS_ORIGIN` on Render to the Cloudflare URL.
